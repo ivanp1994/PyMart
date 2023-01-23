@@ -71,14 +71,14 @@ The real function is fetching large data from a given BioMart dataset. In the ab
 we've narrowed that the information about genes for *Mus musculus* is found in `mmusculus_gene_ensembl` dataset. Now the main function is to fetch
 all genetic information that we want. To do that, use `fetch_data` function. There are three main components to using it properly.
 
-1. Specifying datasets
+### 1. Specifying datasets
 
 You can specify dataset you want by two main ways. First is to directly pass your dataset as `dataset_name` parameter. In our example, this would be 'mmusculus_gene_ensembl'.
 The other way is to specify which database we want and which species we want to fetch dataset from via `database_name` and `species_name`, skipping the `find_dataset` option.
 However, an error will occur if there is more than one dataset corresponding to species query. For example, using "mouse" as `species_name` will trigger an error as there are
 multiple species with "mouse" in their name.
 
-Examples:
+Example:
 ```
    import PyMart as pm
    mouse_data_1 = pm.fetch_data(dataset_name="mmusculus_gene_ensembl")
@@ -87,5 +87,49 @@ Examples:
 
 The databases fetched are identical.
 
-2. Specifying columns ("attributes") of data and filtering.
+### 2. Specifying columns ("attributes") of data and filtering.
 
+Attributes are columns of selected dataset, and control the dimensionality of the data. Passing N attributes will result in M x N pandas DataFrame where M are the rows correspoding to elements of a selected dataset, (e.g. a particular gene or a transcript in Ensembl Genes database) and N are columns of said data. Attributes are specified with `attributes` parameter. Every attribute has its internal name (how it's parsed internally) and its display name (how it's displayed for the user). For example, `ensembl_gene_id` corresponds to display name of `Gene stable ID`. You can specify either one. All attributes that are not found in the dataset are quietly ignored.
+
+Example:
+```
+    import PyMart as pm
+    attributes = ["ensembl_gene_id","Chromosome/scaffold name","manbearpig_homology_perc",]
+    mouse_data_1 = pm.fetch_data(dataset_name="mmusculus_gene_ensembl",attributes = attributes)
+```
+In the above example, we fetch dataset corresponding to genes of *Mus musculus*. We find the ENSEMBL Gene Stable ID ("ensembl_gene_id"), on which chromosome it's located on, and the last element ("manbearpig_homology_perc") is simply ignored. If no attributes are passed, default attributes are fetched instead. 
+
+Additional parameter that can be passed is `filters`. Filters are largely similar to attributes, but instead of passing a simple iterator, a python dictionary should be passed. The keys of that dictionary should correspond to either display name or name of the filter, and values should correspond to desired values. Filters come in differenty types - e.g. boolean (set to `True` or `False`) or text filters (set to some values).  
+
+Example:
+```
+    import PyMart as pm
+    filters ={"Type":["pseudogene","protein_coding"],
+            "chromosome_name": ["1","2"],
+            "transcript_tsl":False,
+            "manbearpig_gene":True,
+            }
+    mouse_data = pm.fetch_data(dataset_name="mmusculus_gene_ensembl",filters=filters)
+```
+
+The above example fetches only pseudogenes and protein coding genes found on chromosomes 1 and 2, who have no Transcript Support Level. There is no such thing as "manbearpig_gene".
+
+### 3. Specifying homologies
+
+There is an additional feature of specifying [gene homology](https://en.wikipedia.org/wiki/Sequence_homology). Every gene dataset contains information about homologies in other species - e.g. Human to Mouse orthologs. There are two parameters in `fetch_dataset` function which deal exclusively with homologies. These are `hom_species` and `hom_query`. 
+
+Example:
+```
+    import PyMart as pm
+    dataset_name = "amexicanus_gene_ensembl"
+    hom_species = ["human","mmusculus","ZebraFish"]
+    hom_query = ["ensembl_gene","associated_gene_name","orthology_type","orthology_confidence","perc_id"]
+    data = pm.fetch
+```
+The above example fetches gene data from Mexican tetra (*Astyanax mexicanus*), and tries to find homology towards three species:
+    1. Humans ("human")
+    2. Mouse ("mmusculus")
+    3. Zebrafish ("ZebraFish")
+The selected queries are their equivalent ENSEMBL Gene IDs, their name, what type of orthology, how confident the orthology score is, and what percentage is the target gene identical to the queried gene (in our case how similar is the human/mouse/zebrafish gene to its Mexican tetra equivalent).
+
+There will be a total of 15 (3 species x 5 queries) additional homology columns.

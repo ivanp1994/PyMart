@@ -90,6 +90,22 @@ def find_dataset(database_name,species,**url_kwargs):
     species_df = DataBase(name=database["name"]).print_species(species)
     return dict(zip(species_df["display_name"],species_df["name"]))
 
+def _fetch_dataset(dataset_name=None,database_name=None,species_name=None,**url_kwargs):
+    """
+    Precursor to "fetch_data", so I don't bloat code
+    """
+
+    if dataset_name is not None:
+        return DataSet(name=dataset_name,**url_kwargs)
+    if (database_name is not None) and (species_name is not None):
+        datadict = find_dataset(database_name,species_name,**url_kwargs)
+        if len(datadict)>1:
+            raise ValueError("Too many datasets for given query, narrow the query")
+        dataset_name = list(datadict.values())[0]
+        return DataSet(name=dataset_name,**url_kwargs)
+    raise ValueError("Pass either valid dataset name, or a combination of valid database name with a valid species name")
+
+
 def fetch_data(dataset_name = None,database_name = None,species_name = None,
                attributes = None,filters = None,
                hom_species = None,hom_query = None,only_unique = True,**url_kwargs):
@@ -153,16 +169,7 @@ def fetch_data(dataset_name = None,database_name = None,species_name = None,
         in Mexican tetra.
 
     """
-    if dataset_name is not None:
-        dataset = DataSet(name=dataset_name,**url_kwargs)
-    elif (database_name is not None) and (species_name is not None):
-        datadict = find_dataset(database_name,species_name,**url_kwargs)
-        if len(datadict)>1:
-            raise ValueError("Too many datasets for given query, narrow the query")
-        dataset_name = list(datadict.values())[0]
-        dataset = DataSet(name=dataset_name,**url_kwargs)
-    else:
-        raise ValueError("Pass either valid dataset name, or a combination of valid database name with a valid species name")
+    dataset = _fetch_dataset(dataset_name,database_name,species_name,**url_kwargs)
 
     if attributes is None:
         attributes = dataset.attributes[dataset.attributes.default]["name"].tolist()
@@ -170,3 +177,28 @@ def fetch_data(dataset_name = None,database_name = None,species_name = None,
         attributes = attributes + dataset.extract_homology_attributes(hom_species,hom_query)
 
     return dataset.fetch(attributes,filters,only_unique)
+
+def get_attributes(dataset_name = None,database_name = None,species_name = None,
+                   display=False,**url_kwargs):
+    """
+    Returns all attributes for a given dataset in the form out pandas DataFrame.
+
+    If "display" is set to True, prints out all the attributes.
+    """
+    dataset = _fetch_dataset(dataset_name,database_name,species_name,**url_kwargs)
+    if display:
+        dataset.print_attributes()
+    return dataset.attributes
+
+def get_filters(dataset_name = None,database_name = None,species_name = None,
+                   display=False,**url_kwargs):
+    """
+    Returns all filters for a given dataset in the form out pandas DataFrame.
+
+    If "display" is set to True, prints out all the filters.
+    """
+
+    dataset = _fetch_dataset(dataset_name,database_name,species_name,**url_kwargs)
+    if display:
+        dataset.print_filters()
+    return dataset.filters

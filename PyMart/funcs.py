@@ -79,7 +79,7 @@ def find_dataset(database_name,species,**url_kwargs):
                         (databases["display_name"].isin([alt_name,database_name]))]
 
     if len(database)==0:
-        raise ValueError("No database found for query '{database_name}'")
+        raise ValueError(f"No database found for query '{database_name}'")
 
     database.reset_index(inplace=True,drop=True)
     database = database.iloc[0,:]

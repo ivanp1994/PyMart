@@ -124,7 +124,7 @@ Example:
     dataset_name = "amexicanus_gene_ensembl"
     hom_species = ["human","mmusculus","ZebraFish"]
     hom_query = ["ensembl_gene","associated_gene_name","orthology_type","orthology_confidence","perc_id"]
-    data = pm.fetch
+    data = pm.fetch_data(dataset_name=dataset_name,hom_species=hom_species,hom_query=hom_query)
 ```
 The above example fetches gene data from Mexican tetra (*Astyanax mexicanus*), and tries to find homology towards three species:
     1. Humans ("human")
@@ -133,3 +133,18 @@ The above example fetches gene data from Mexican tetra (*Astyanax mexicanus*), a
 The selected queries are their equivalent ENSEMBL Gene IDs, their name, what type of orthology, how confident the orthology score is, and what percentage is the target gene identical to the queried gene (in our case how similar is the human/mouse/zebrafish gene to its Mexican tetra equivalent).
 
 There will be a total of 15 (3 species x 5 queries) additional homology columns.
+
+## Finding out information about given dataset
+
+Once the desired dataset is found, elements of those dataset must be found. Every BioMart dataset has *attributes* which are columns of dataset corresponding to a feature of the database (e.g. attribute *Gene stable ID* represents ENSEMBL Gene ID in the Ensembl Genes 108 database) and *filters* which are used to filter the elements of the dataset (e.g. filtering for a particular chromosome via "Chromosome/scaffold" option). To inspect given dataset with respect to filters and attributes, use the functions `get_filters` and `get_attributes` respectively.
+These two functions specify a dataset via `dataset_name` or via `database_name` and `species` parameters, much like the function `fetch_data`. Additional parameter is `display` which if set to True will print out all rows of attributes or filters.
+
+Example:
+```
+    import PyMart_examp as pm
+    dataset_name = "amexicanus_gene_ensembl"
+    attributes = pm.get_attributes(dataset_name,display=True)
+    filters = pm.get_filters(dataset_name,display=True)
+```
+
+The above code will print out all atributes and filters related to genes of Mexican tetra and return them in the form of pandas dataframe. It can then be inspected and used to decide what will be fetched and filtered.

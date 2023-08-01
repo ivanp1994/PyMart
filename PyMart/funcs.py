@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# pylint: disable=C0103
-# pylint: disable=C0301
-# pylint: disable=R0913
-
-
 from .base import FrontBase, DataBase, DataSet
 
 def list_databases(**url_kwargs):
@@ -104,7 +98,6 @@ def _fetch_dataset(dataset_name=None,database_name=None,species_name=None,**url_
         dataset_name = list(datadict.values())[0]
         return DataSet(name=dataset_name,**url_kwargs)
     raise ValueError("Pass either valid dataset name, or a combination of valid database name with a valid species name")
-
 
 def fetch_data(dataset_name = None,database_name = None,species_name = None,
                attributes = None,filters = None,

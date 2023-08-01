@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=C0103
-# pylint: disable=C0301
 """
 To connect to front page use
     >>> front = FrontBase()
@@ -162,6 +160,7 @@ from time import perf_counter
 import re
 import requests
 import pandas as pd
+
 
 @dataclass
 class Base:

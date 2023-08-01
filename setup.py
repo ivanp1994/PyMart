@@ -25,7 +25,7 @@ setup(name="PyMart",
       install_requires=["requests >= 2.27.1",
                         "pandas >= 1.4.1",
                         ],
-      python_requires=">=3.8.12",
+      python_requires=">=3.8",
       extras_require={"extra": extra_reqs,
                       }
       )

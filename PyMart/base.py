@@ -151,8 +151,8 @@ Created on Wed Jan 11 14:52:39 2023
 """
 
 
-from dataclasses import dataclass,field
-from typing import Dict,List
+from dataclasses import dataclass, field
+from typing import Dict, List
 from xml.etree import ElementTree
 from io import StringIO
 from time import perf_counter
@@ -167,28 +167,29 @@ class Base:
     """
     Base class for all others
     """
-    host : str = "http://www.ensembl.org"
-    path : str = "/biomart/martservice"
-    port : int = 80
-    virtual_schema : str = "default"
+    host: str = "http://www.ensembl.org"
+    path: str = "/biomart/martservice"
+    port: int = 80
+    virtual_schema: str = "default"
 
     @property
     def url(self):
         """Url to connect to database"""
         return f"{self.host}:{self.port}{self.path}"
 
-    def get(self,**params):
+    def get(self, **params):
         """Base method for fetching a query"""
-        r = requests.get(self.url,params=params)
+        r = requests.get(self.url, params=params)
         r.raise_for_status()
         return r
 
-    def reset_connection_params(self,**kwargs):
+    def reset_connection_params(self, **kwargs):
         """Resets any part of url using specified keyarguments"""
-        self.host = kwargs.get("host",self.host)
-        self.path = kwargs.get("path",self.path)
-        self.port = kwargs.get("port",self.port)
-        self.virtual_schema = kwargs.get("virtual_schema",self.virtual_schema)
+        self.host = kwargs.get("host", self.host)
+        self.path = kwargs.get("path", self.path)
+        self.port = kwargs.get("port", self.port)
+        self.virtual_schema = kwargs.get("virtual_schema", self.virtual_schema)
+
 
 @dataclass
 class DataBase(Base):
@@ -201,9 +202,9 @@ class DataBase(Base):
         contained in oen base
 
     """
-    name : str = ""
-    display_name : str = ""
-    _datasets : pd.DataFrame = pd.DataFrame(columns = ["name","display_name"])
+    name: str = ""
+    display_name: str = ""
+    _datasets: pd.DataFrame = pd.DataFrame(columns=["name", "display_name"])
 
     def _get_datasets(self):
         """
@@ -214,9 +215,9 @@ class DataBase(Base):
 
             # Read result frame from response.
             result = pd.read_csv(StringIO(response.text), sep='\t',
-                             header=None, )[[1,2]]
+                                 header=None, )[[1, 2]]
 
-            result.columns = ["name","display_name"]
+            result.columns = ["name", "display_name"]
             return result
         return self._datasets
 
@@ -226,39 +227,42 @@ class DataBase(Base):
         pandas dataframe containing information about all datasets
         within a particular instance of this class
         """
-        if len(self._datasets)==0:
+        if len(self._datasets) == 0:
             self._datasets = self._get_datasets()
         return self._datasets
 
-    def find_species(self,specie):
+    def find_species(self, specie):
         """
         Finds the dataset corresponding to a given specied in the database.
         The "specie" parameter muse be a string found in either "display_name"
         or "name" columns of datasets. Case insensitive.
         """
         ds = self.datasets
-        if len(ds)==0:
+        if len(ds) == 0:
             if not self.name:
                 raise ValueError("No name for a given database")
             raise ValueError("No datasets found for name")
 
-        result = ds[ds.display_name.str.contains(specie,case=False,regex=True)|
-                    ds["name"].str.contains(specie,case=False,regex=True)]
-        if len(result)==0:
-            specie = specie.replace("_"," ")
-            result = ds[ds.display_name.str.contains(specie,case=False,regex=True)]
-        if len(result)==0:
+        result = ds[ds.display_name.str.contains(specie, case=False, regex=True) |
+                    ds["name"].str.contains(specie, case=False, regex=True)]
+        if len(result) == 0:
+            specie = specie.replace("_", " ")
+            result = ds[ds.display_name.str.contains(
+                specie, case=False, regex=True)]
+        if len(result) == 0:
             raise ValueError(f"Database does not contain '{specie}'")
         return result
 
-    def print_species(self,specie):
+    def print_species(self, specie):
         """
         Prints out the dataset(s) for the queried species
         """
         df = self.find_species(specie)
-        for _,row in df.iterrows():
-            print(f"Display name '{row.display_name}' corresponds to '{row['name']}'")
+        for _, row in df.iterrows():
+            print(
+                f"Display name '{row.display_name}' corresponds to '{row['name']}'")
         return df
+
 
 @dataclass
 class FrontBase(Base):
@@ -267,21 +271,21 @@ class FrontBase(Base):
     This class contains all BioMart databases.
     """
 
-    xml_map : Dict[str,str] =field(default_factory=lambda:
-                                   {
-        "name": "name",
-        "display_name": "displayName",
-        "host": "host",
-        "path": "path",
-        "virtual_schema": "serverVirtualSchema"
+    xml_map: Dict[str, str] = field(default_factory=lambda:
+                                    {
+                                        "name": "name",
+                                        "display_name": "displayName",
+                                        "host": "host",
+                                        "path": "path",
+                                        "virtual_schema": "serverVirtualSchema"
                                     }
-                                   )
-    _databases : List[DataBase] = field(default_factory=list)
+                                    )
+    _databases: List[DataBase] = field(default_factory=list)
 
     @property
     def databases(self):
         """All databases in the form of a pandas dataframe"""
-        if len(self._databases)==0:
+        if len(self._databases) == 0:
             self._databases = self._get_databases()
         return pd.DataFrame(self._databases)
 
@@ -289,7 +293,6 @@ class FrontBase(Base):
         """Constructor function for databases (1/2)"""
         r = self.get(type="registry")
         xml = ElementTree.fromstring(r.content)
-        #xml = string_to_xml(r.content)
         return [self._db_from_xml(node) for node in xml.findall('MartURLLocation')]
 
     def _db_from_xml(self, node):
@@ -303,9 +306,11 @@ class FrontBase(Base):
 
     def print_databases(self):
         """Prints out all databases """
-        for _,row in self.databases.iterrows():
-            print(f"""Display name '{row.display_name}' corresponds to '{row["name"]}'""")
+        for _, row in self.databases.iterrows():
+            print(
+                f"""Display name '{row.display_name}' corresponds to '{row["name"]}'""")
         return self.list_databases()
+
 
 @dataclass
 class Attribute:
@@ -314,10 +319,11 @@ class Attribute:
     a particular dataset. Used to construct
     attributes dataframe quickly.
     """
-    name : str
-    display_name : str
-    description : str
-    default : bool = False
+    name: str
+    display_name: str
+    description: str
+    default: bool = False
+
 
 @dataclass
 class Filter:
@@ -326,23 +332,26 @@ class Filter:
     a particular dataset. Used to construct
     attributes dataframe quickly.
     """
-    name : str
-    display_name : str
-    description : str
-    type : str
-    operator : str
-    sub_options : bool
-    options : pd.DataFrame = pd.DataFrame()
+    name: str
+    display_name: str
+    description: str
+    type: str
+    operator: str
+    sub_options: bool
+    options: pd.DataFrame = pd.DataFrame()
 
-    def explain_filter(self,print_options=True):
+    def explain_filter(self, print_options=True):
         """
         Explains filter - prints out what the filter does
         """
-        print(f"Filter's display name is '{self.display_name}' and its internal name is '{self.name}'")
-        print(f"Filter's operator is '{self.operator}' and its type is '{self.type}'")
+        print(
+            f"Filter's display name is '{self.display_name}' and its internal name is '{self.name}'")
+        print(
+            f"Filter's operator is '{self.operator}' and its type is '{self.type}'")
         if self.sub_options and print_options:
             print("It has sub options:")
-            print(self.options.to_string(index=False,justify="center"))
+            print(self.options.to_string(index=False, justify="center"))
+
 
 @dataclass
 class DataSet(Base):
@@ -363,13 +372,12 @@ class DataSet(Base):
             other species
 
     """
-    name : str = ""
-    display_name : str = ""
-    _config_xml : object = None
-    #_attributes : List[Attribute] = field(default_factory=lambda: list())
-    _attributes : List[Attribute] = field(default_factory=list)
-    _filters : List[Filter] = field(default_factory=list)
-    _homology : pd.DataFrame = pd.DataFrame()
+    name: str = ""
+    display_name: str = ""
+    _config_xml: object = None
+    _attributes: List[Attribute] = field(default_factory=list)
+    _filters: List[Filter] = field(default_factory=list)
+    _homology: pd.DataFrame = pd.DataFrame()
 
     @property
     def config_xml(self):
@@ -388,14 +396,14 @@ class DataSet(Base):
     @property
     def attributes(self):
         """Attributes in the form of dataframe"""
-        if len(self._attributes)==0:
+        if len(self._attributes) == 0:
             self.populate_attributes()
         return pd.DataFrame(self._attributes)
 
     @property
     def filters(self):
         """Filters in the form of dataframe"""
-        if len(self._filters)==0:
+        if len(self._filters) == 0:
             self.populate_filters()
         df = pd.DataFrame(self._filters)
         df.pop("options")
@@ -404,104 +412,110 @@ class DataSet(Base):
     @property
     def homology(self):
         """Data about homology towards other species"""
-        if len(self._homology)==0:
+        if len(self._homology) == 0:
             self.populate_homology()
         return self._homology
 
-    def populate_attributes(self,force=False):
+    def populate_attributes(self, force=False):
         """Constructor for attributes property"""
-        if len(self._attributes)>0 and not force:
+        if len(self._attributes) > 0 and not force:
             return self._attributes
 
         for page_index, page in enumerate(self.config_xml.iter("AttributePage")):
             for desc in page.iter("AttributeDescription"):
                 attrib = desc.attrib
-                is_default = (attrib.get("default","")=="true") and (page_index==0)
+                is_default = (attrib.get("default", "") ==
+                              "true") and (page_index == 0)
 
-                at = Attribute(name = attrib['internalName'],
-                               display_name = attrib.get('displayName', ''),
-                               description = attrib.get('description', ''),
-                               default = is_default)
+                at = Attribute(name=attrib['internalName'],
+                               display_name=attrib.get('displayName', ''),
+                               description=attrib.get('description', ''),
+                               default=is_default)
                 self._attributes.append(at)
         return self._attributes
 
-    def populate_filters(self,force=False):
+    def populate_filters(self, force=False):
         """Constructor for filters property"""
-        if len(self._filters)>0 and not force:
+        if len(self._filters) > 0 and not force:
             return self._filters
 
         for node in self.config_xml.iter("FilterDescription"):
 
             attrib = node.attrib
-            #check for submenus
-            if len(list(node))==0:
+            # check for submenus
+            if len(list(node)) == 0:
                 options = pd.DataFrame()
                 sub_options = False
             else:
-                options = pd.DataFrame([sub_el.attrib for sub_el in list(node)])
+                options = pd.DataFrame(
+                    [sub_el.attrib for sub_el in list(node)])
                 sub_options = True
 
-            ft= Filter(name = attrib["internalName"],
-                       type = attrib.get("type",""),
-                       description = attrib.get("description",""),
-                       display_name = attrib.get("displayName",""),
-                       operator = attrib.get("qualifier",""),
-                       sub_options = sub_options,
-                       options = options
-                       )
+            ft = Filter(name=attrib["internalName"],
+                        type=attrib.get("type", ""),
+                        description=attrib.get("description", ""),
+                        display_name=attrib.get("displayName", ""),
+                        operator=attrib.get("qualifier", ""),
+                        sub_options=sub_options,
+                        options=options
+                        )
             self._filters.append(ft)
         return self._filters
 
-    def populate_homology(self,force=False):
+    def populate_homology(self, force=False):
         """Constructor for homology property"""
-        if len(self._homology)>0 and not force:
+        if len(self._homology) > 0 and not force:
             return self._homology
 
-        homology_dataset = self.attributes[self.attributes.name.str.contains("homolog")].copy()
+        homology_dataset = self.attributes[self.attributes.name.str.contains(
+            "homolog")].copy()
 
         def match_homology(string):
-            match = re.match("(?P<spc>[^_]*)_homolog_(?P<wht>.*$)",string)
+            match = re.match("(?P<spc>[^_]*)_homolog_(?P<wht>.*$)", string)
             if match:
                 groups = match.groupdict()
-                return groups["spc"],groups["wht"]
+                return groups["spc"], groups["wht"]
             return None, None
 
+        homology_dataset[["specie_name", "qualifier_name"]] = homology_dataset.apply(lambda row: match_homology(row["name"]),
+                                                                                     axis=1, result_type="expand")
+        homology_dataset = homology_dataset[~(
+            homology_dataset.specie_name.isna())]
+        homology_dataset.drop(["description", "default"], axis=1, inplace=True)
 
-        homology_dataset[["specie_name","qualifier_name"]] = homology_dataset.apply(lambda row: match_homology(row["name"]),
-                                                                 axis=1,result_type="expand")
-        homology_dataset = homology_dataset[~(homology_dataset.specie_name.isna())]
-        homology_dataset.drop(["description","default"],axis=1,inplace=True)
+        _sep = homology_dataset.loc[homology_dataset.qualifier_name == "ensembl_gene"].copy(
+        )
+        _sep["display_name"] = _sep["display_name"].str.replace(
+            "gene stable ID", "", regex=False)
 
-        _sep = homology_dataset.loc[homology_dataset.qualifier_name=="ensembl_gene"].copy()
-        _sep["display_name"] = _sep["display_name"].str.replace("gene stable ID","",regex=False)
-
-        species_mapper = dict(zip(_sep["specie_name"],_sep["display_name"]))
-        homology_dataset["specie_display_name"] = homology_dataset["specie_name"].map(species_mapper)
-        homology_dataset["qualifier_display_name"] = homology_dataset.apply(lambda row: row["display_name"].replace(row["specie_display_name"],""),
+        species_mapper = dict(zip(_sep["specie_name"], _sep["display_name"]))
+        homology_dataset["specie_display_name"] = homology_dataset["specie_name"].map(
+            species_mapper)
+        homology_dataset["qualifier_display_name"] = homology_dataset.apply(lambda row: row["display_name"].replace(row["specie_display_name"], ""),
                                                                             axis=1)
         self._homology = homology_dataset
 
     def print_attributes(self):
         """Prints out attributes"""
-        print(self.attributes.to_string(index=False,justify="center"))
+        print(self.attributes.to_string(index=False, justify="center"))
 
     def print_filters(self):
         """Prints out filters"""
-        print(self.filters.to_string(index=False,justify="center"))
+        print(self.filters.to_string(index=False, justify="center"))
 
-    def explain_filter(self,index,print_options=True):
+    def explain_filter(self, index, print_options=True):
         """
         Explains a filter. Pass either a string to denote a filter's name (internal or displayed),
         or a index correspoding to filter's location in dataframe
         """
-        if isinstance(index,str):
-            select = self.filters[(self.filters.name==index)|
-                                     (self.filters.display_name==index)]
-            if len(select)==0:
+        if isinstance(index, str):
+            select = self.filters[(self.filters.name == index) |
+                                  (self.filters.display_name == index)]
+            if len(select) == 0:
                 raise ValueError(f"No filter for name '{index}'")
             index = select.index.values[0]
 
-        elif isinstance(index,int):
+        elif isinstance(index, int):
             ...
         else:
             raise ValueError("Pass either a string type or index type")
@@ -509,39 +523,40 @@ class DataSet(Base):
         self._filters[index].explain_filter(print_options)
 
     @staticmethod
-    def add_attributes(name,subelem):
+    def add_attributes(name, subelem):
         """Add attributes to query"""
-        at_el = ElementTree.SubElement(subelem,"Attribute")
-        at_el.set("name",name)
+        at_el = ElementTree.SubElement(subelem, "Attribute")
+        at_el.set("name", name)
 
     @staticmethod
-    def add_filters(filter_row,filter_query,subelem):
+    def add_filters(filter_row, filter_query, subelem):
         """Add filters to query"""
-        value = filter_query.get(filter_row["name"],None)
+        value = filter_query.get(filter_row["name"], None)
         if value is None:
-            value = filter_query.get(filter_row["display_name"],None)
+            value = filter_query.get(filter_row["display_name"], None)
         if value is None:
-            raise ValueError(f"""There is no value specified for key '{filter_row["name"]}'""")
+            raise ValueError(
+                f"""There is no value specified for key '{filter_row["name"]}'""")
 
-        ft_el = ElementTree.SubElement(subelem,"Filter")
-        ft_el.set("name",filter_row["name"])
+        ft_el = ElementTree.SubElement(subelem, "Filter")
+        ft_el.set("name", filter_row["name"])
 
-        if filter_row["type"]=="boolean":
-            if value is True or value in ["included","only"]:
-                ft_el.set("excluded","0")
-            elif value is False or value in["excluded"]:
-                ft_el.set("excluded","1")
+        if filter_row["type"] == "boolean":
+            if value is True or value in ["included", "only"]:
+                ft_el.set("excluded", "0")
+            elif value is False or value in ["excluded"]:
+                ft_el.set("excluded", "1")
             else:
                 raise ValueError(f"Invalid value for boolean filter : {value}")
 
-        elif isinstance(value,(list,tuple)):
+        elif isinstance(value, (list, tuple)):
             value = ",".join([str(x) for x in value])
-            ft_el.set("value",value)
+            ft_el.set("value", value)
 
         else:
-            ft_el.set("value",str(value))
+            ft_el.set("value", str(value))
 
-    def fetch(self,attributes=None,filters=None,only_unique=True):
+    def fetch(self, attributes=None, filters=None, only_unique=True):
         """
         The most important method in this class. Retrieves data
         associated with a particular instance of this class.
@@ -592,15 +607,17 @@ class DataSet(Base):
         if attributes is None:
             attributes = self.attributes[self.attributes.default]
         else:
-            attributes = self.attributes[(self.attributes.name.isin(attributes))|
-                                        (self.attributes.display_name.isin(attributes))]
+            attributes = self.attributes[(self.attributes.name.isin(attributes)) |
+                                         (self.attributes.display_name.isin(attributes))]
 
-        attributes = attributes["name"].apply(self.add_attributes,subelem=dataset)
+        attributes = attributes["name"].apply(
+            self.add_attributes, subelem=dataset)
 
         if filters is not None:
-            filter_df = self.filters[(self.filters.name.isin(filters.keys()))|
-                                       (self.filters.display_name.isin(filters.keys()))].copy()
-            filter_df.apply(self.add_filters,axis=1,filter_query=filters,subelem=dataset)
+            filter_df = self.filters[(self.filters.name.isin(filters.keys())) |
+                                     (self.filters.display_name.isin(filters.keys()))].copy()
+            filter_df.apply(self.add_filters, axis=1,
+                            filter_query=filters, subelem=dataset)
         _s = perf_counter()
         r = self.get(query=ElementTree.tostring(query))
         _e = perf_counter()
@@ -610,7 +627,7 @@ class DataSet(Base):
 
         return pd.read_csv(StringIO(r.text),)
 
-    def extract_homology_attributes(self,species,query):
+    def extract_homology_attributes(self, species, query):
         """
         Extracts information about homology in the dataset
         towards other species.
@@ -643,10 +660,11 @@ class DataSet(Base):
 
         result = list()
         for specie in species:
-            sp_df = hm[(hm.specie_name.str.contains(specie,case=False,regex=False))|(hm.specie_display_name.str.contains(specie,case=False,regex=False))]
+            sp_df = hm[(hm.specie_name.str.contains(specie, case=False, regex=False)) | (
+                hm.specie_display_name.str.contains(specie, case=False, regex=False))]
             result.append(sp_df)
 
-        result = pd.concat(result,ignore_index=True)
+        result = pd.concat(result, ignore_index=True)
         result = result[result.qualifier_name.isin(query)]
 
         return result["name"].tolist()

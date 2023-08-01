@@ -1,5 +1,6 @@
 from .base import FrontBase, DataBase, DataSet
 
+
 def list_databases(**url_kwargs):
     """
     Lists all databases found on ENSEMBL's biomart and
@@ -25,10 +26,12 @@ def list_databases(**url_kwargs):
         >>> Display name 'Ensembl Regulation 108' corresponds to 'ENSEMBL_MART_FUNCGEN'
 
     """
-    url_kwargs =  {k:v for k,v in url_kwargs.items() if k in ["host","path","port","virtual_schema"]}
+    url_kwargs = {k: v for k, v in url_kwargs.items(
+    ) if k in ["host", "path", "port", "virtual_schema"]}
     return FrontBase(**url_kwargs).print_databases()
 
-def find_dataset(database_name,species,**url_kwargs):
+
+def find_dataset(database_name, species, **url_kwargs):
     """
     Finds all datasets within a given database for a given species
     and returns them in the form of a dictionary where keys correspond to
@@ -67,41 +70,47 @@ def find_dataset(database_name,species,**url_kwargs):
 
     """
     databases = FrontBase(**url_kwargs).databases
-    alt_name = database_name.replace(" ","_").upper()
+    alt_name = database_name.replace(" ", "_").upper()
 
-    database = databases[(databases["name"].isin([alt_name,database_name]))|
-                        (databases["display_name"].isin([alt_name,database_name]))]
+    database = databases[(databases["name"].isin([alt_name, database_name])) |
+                         (databases["display_name"].isin([alt_name, database_name]))]
 
-    if len(database)==0:
+    if len(database) == 0:
         raise ValueError(f"No database found for query '{database_name}'")
 
-    database.reset_index(inplace=True,drop=True)
-    database = database.iloc[0,:]
+    database.reset_index(inplace=True, drop=True)
+    database = database.iloc[0, :]
 
-    print(f"""Query database name '{database_name}' corresponds to '{database["name"]}'""")
-    print(f"For queried species '{species}', the database contains the following datasets: ")
+    print(
+        f"""Query database name '{database_name}' corresponds to '{database["name"]}'""")
+    print(
+        f"For queried species '{species}', the database contains the following datasets: ")
 
     species_df = DataBase(name=database["name"]).print_species(species)
-    return dict(zip(species_df["display_name"],species_df["name"]))
+    return dict(zip(species_df["display_name"], species_df["name"]))
 
-def _fetch_dataset(dataset_name=None,database_name=None,species_name=None,**url_kwargs):
+
+def _fetch_dataset(dataset_name=None, database_name=None, species_name=None, **url_kwargs):
     """
     Precursor to "fetch_data", so I don't bloat code
     """
 
     if dataset_name is not None:
-        return DataSet(name=dataset_name,**url_kwargs)
+        return DataSet(name=dataset_name, **url_kwargs)
     if (database_name is not None) and (species_name is not None):
-        datadict = find_dataset(database_name,species_name,**url_kwargs)
-        if len(datadict)>1:
-            raise ValueError("Too many datasets for given query, narrow the query")
+        datadict = find_dataset(database_name, species_name, **url_kwargs)
+        if len(datadict) > 1:
+            raise ValueError(
+                "Too many datasets for given query, narrow the query")
         dataset_name = list(datadict.values())[0]
-        return DataSet(name=dataset_name,**url_kwargs)
-    raise ValueError("Pass either valid dataset name, or a combination of valid database name with a valid species name")
+        return DataSet(name=dataset_name, **url_kwargs)
+    raise ValueError(
+        "Pass either valid dataset name, or a combination of valid database name with a valid species name")
 
-def fetch_data(dataset_name = None,database_name = None,species_name = None,
-               attributes = None,filters = None,
-               hom_species = None,hom_query = None,only_unique = True,**url_kwargs):
+
+def fetch_data(dataset_name=None, database_name=None, species_name=None,
+               attributes=None, filters=None,
+               hom_species=None, hom_query=None, only_unique=True, **url_kwargs):
     """
     Fetches data from BioMart servers.
     The procedure consists of three operations :
@@ -162,36 +171,43 @@ def fetch_data(dataset_name = None,database_name = None,species_name = None,
         in Mexican tetra.
 
     """
-    dataset = _fetch_dataset(dataset_name,database_name,species_name,**url_kwargs)
+    dataset = _fetch_dataset(dataset_name, database_name,
+                             species_name, **url_kwargs)
 
     if attributes is None:
-        attributes = dataset.attributes[dataset.attributes.default]["name"].tolist()
+        attributes = dataset.attributes[dataset.attributes.default]["name"].tolist(
+        )
     if (hom_species is not None) and (hom_query is not None):
-        attributes = attributes + dataset.extract_homology_attributes(hom_species,hom_query)
+        attributes = attributes + \
+            dataset.extract_homology_attributes(hom_species, hom_query)
 
-    return dataset.fetch(attributes,filters,only_unique)
+    return dataset.fetch(attributes, filters, only_unique)
 
-def get_attributes(dataset_name = None,database_name = None,species_name = None,
-                   display=False,**url_kwargs):
+
+def get_attributes(dataset_name=None, database_name=None, species_name=None,
+                   display=False, **url_kwargs):
     """
     Returns all attributes for a given dataset in the form out pandas DataFrame.
 
     If "display" is set to True, prints out all the attributes.
     """
-    dataset = _fetch_dataset(dataset_name,database_name,species_name,**url_kwargs)
+    dataset = _fetch_dataset(dataset_name, database_name,
+                             species_name, **url_kwargs)
     if display:
         dataset.print_attributes()
     return dataset.attributes
 
-def get_filters(dataset_name = None,database_name = None,species_name = None,
-                   display=False,**url_kwargs):
+
+def get_filters(dataset_name=None, database_name=None, species_name=None,
+                display=False, **url_kwargs):
     """
     Returns all filters for a given dataset in the form out pandas DataFrame.
 
     If "display" is set to True, prints out all the filters.
     """
 
-    dataset = _fetch_dataset(dataset_name,database_name,species_name,**url_kwargs)
+    dataset = _fetch_dataset(dataset_name, database_name,
+                             species_name, **url_kwargs)
     if display:
         dataset.print_filters()
     return dataset.filters

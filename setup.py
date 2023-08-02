@@ -7,6 +7,9 @@ with open("README.md", "r") as _f:
 with open("requirements_dev.txt", "r") as _f:
     extra_reqs = _f.read().strip().split("\n")
 
+with open("requirements.txt", "r") as _f:
+    install_reqs = _f.read().strip().split("\n")
+
 setup(name="PyMart",
       version="0.0.1",
       description="Python based API wrapper around Ensembl's BioMart",
@@ -22,9 +25,7 @@ setup(name="PyMart",
                    "Programming Language :: Python :: 3.8",
                    "Programming Language :: Python :: 3 :: Only"
                    "Intended Audience :: Science/Research"],
-      install_requires=["requests >= 2.27.1",
-                        "pandas >= 1.4.1",
-                        ],
+      install_requires=install_reqs,
       python_requires=">=3.8",
       extras_require={"extra": extra_reqs,
                       }

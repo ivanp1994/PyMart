@@ -23,7 +23,7 @@ setup(name="PyMart",
       classifiers=["Development Status :: 3 - Alpha",
                    "License :: OSI Approved :: MIT License",
                    "Programming Language :: Python :: 3.8",
-                   "Programming Language :: Python :: 3 :: Only"
+                   "Programming Language :: Python :: 3 :: Only",
                    "Intended Audience :: Science/Research"],
       install_requires=install_reqs,
       python_requires=">=3.8",

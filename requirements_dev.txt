@@ -1,2 +1,5 @@
 flake8==3.9.2
 pytest==6.2.5
+twine==4.0.2
+wheel==0.38.4
+

@@ -16,7 +16,8 @@ Additional things used for testing are specified in "requirements_dev" and those
 flake8 for code linting, etc.
 
 Simply clone the repository and install via `pip install .` 
-(Not yet added to PyPi)
+It's added to pypi and can be installed via
+    `pip install PyMart==0.0.1`
 
 # Usage
 

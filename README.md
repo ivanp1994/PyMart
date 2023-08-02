@@ -1,5 +1,22 @@
+
+
 # PyMart
-Python interface towards ENSEMBL's BioMart
+Python interface towards ENSEMBL's BioMart.
+
+
+[![Licence](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/irahorecka/sgd-rest/main/LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Linting](https://github.com/ivanp1994/PyMart/actions/workflows/flaking.yaml/badge.svg)](https://github.com/ivanp1994/PyMart/actions/workflows/flaking.yaml) [![Tests](https://github.com/ivanp1994/PyMart/actions/workflows/testing.yaml/badge.svg)](https://github.com/ivanp1994/PyMart/actions/workflows/testing.yaml)
+
+# Installation and requirements
+The only requirements are requests and pandas library, and those are things you likely already have.
+PyMart makes use of `dataclass` which is Python 3.7+ minimum, and so the minimum Python environment if Python 3.8.
+
+Additional things used for testing are specified in "requirements_dev" and those are things like pytest for code testing,
+flake8 for code linting, etc.
+
+Simply clone the repository and install via `pip install .` 
+(Not yet added to PyPi)
 
 # Usage
 
@@ -9,8 +26,8 @@ The first drop-down menu [ENSEMBL BioMart](https://www.ensembl.org/info/data/bio
 that are found on BioMart servers. To list those databases use the `list_databases` function of the module.
 For example:
 ```
-    import PyMart as pm
-    database_df pm.list_databases()
+    import pymart as pm
+    database_df = pm.list_databases()
  ```
 Will output the following:
 ```
@@ -38,7 +55,7 @@ Likewise `species` argument needs to be a string contained in either internal na
 
 For example:
 ```
-    import PyMart as pm
+    import pymart as pm
     datasets = pm.find_dataset("ensembl mart ensembl","mouse")
 ```
 Will output the following:
@@ -55,7 +72,7 @@ Will output the following:
 ```
 To narrow the selection, instead of "mouse" use more precise "mmus":
 ```
-   import PyMart as pm
+   import pymart as pm
    datasets = pm.find_dataset("ensembl mart ensembl","mouse")
 ```
 The output is now:
@@ -80,20 +97,37 @@ multiple species with "mouse" in their name.
 
 Example:
 ```
-   import PyMart as pm
+   import pymart as pm
    mouse_data_1 = pm.fetch_data(dataset_name="mmusculus_gene_ensembl")
    mouse_data_2 = pm.fetch_data(database_name="ensembl mart ensembl",species_name="mmus")
 ```
 
 The databases fetched are identical.
 
-### 2. Specifying columns ("attributes") of data and filtering.
+
+### 2. Finding out information about given dataset
+
+Once the desired dataset is found, elements of those dataset must be found. Every BioMart dataset has *attributes* which are columns of dataset corresponding to a feature of the database (e.g. attribute *Gene stable ID* represents ENSEMBL Gene ID in the Ensembl Genes 108 database) and *filters* which are used to filter the elements of the dataset (e.g. filtering for a particular chromosome via "Chromosome/scaffold" option). To inspect given dataset with respect to filters and attributes, use the functions `get_filters` and `get_attributes` respectively.
+These two functions specify a dataset via `dataset_name` or via `database_name` and `species` parameters, much like the function `fetch_data`. Additional parameter is `display` which if set to True will print out all rows of attributes or filters.
+
+Example:
+```
+    import pymart as pm
+    dataset_name = "amexicanus_gene_ensembl"
+    attributes = pm.get_attributes(dataset_name,display=True)
+    filters = pm.get_filters(dataset_name,display=True)
+```
+
+The above code will print out all atributes and filters related to genes of Mexican tetra and return them in the form of pandas dataframe. It can then be inspected and used to decide what will be fetched and filtered.
+
+
+### 3. Specifying columns ("attributes") of data and filtering.
 
 Attributes are columns of selected dataset, and control the dimensionality of the data. Passing N attributes will result in M x N pandas DataFrame where M are the rows correspoding to elements of a selected dataset, (e.g. a particular gene or a transcript in Ensembl Genes database) and N are columns of said data. Attributes are specified with `attributes` parameter. Every attribute has its internal name (how it's parsed internally) and its display name (how it's displayed for the user). For example, `ensembl_gene_id` corresponds to display name of `Gene stable ID`. You can specify either one. All attributes that are not found in the dataset are quietly ignored.
 
 Example:
 ```
-    import PyMart as pm
+    import pymart as pm
     attributes = ["ensembl_gene_id","Chromosome/scaffold name","manbearpig_homology_perc",]
     mouse_data_1 = pm.fetch_data(dataset_name="mmusculus_gene_ensembl",attributes = attributes)
 ```
@@ -103,7 +137,7 @@ Additional parameter that can be passed is `filters`. Filters are largely simila
 
 Example:
 ```
-    import PyMart as pm
+    import pymart as pm
     filters ={"Type":["pseudogene","protein_coding"],
             "chromosome_name": ["1","2"],
             "transcript_tsl":False,
@@ -114,13 +148,13 @@ Example:
 
 The above example fetches only pseudogenes and protein coding genes found on chromosomes 1 and 2, who have no Transcript Support Level. There is no such thing as "manbearpig_gene".
 
-### 3. Specifying homologies
+### 4. Specifying homologies
 
 There is an additional feature of specifying [gene homology](https://en.wikipedia.org/wiki/Sequence_homology). Every gene dataset contains information about homologies in other species - e.g. Human to Mouse orthologs. There are two parameters in `fetch_dataset` function which deal exclusively with homologies. These are `hom_species` and `hom_query`. 
 
 Example:
 ```
-    import PyMart as pm
+    import pymart as pm
     dataset_name = "amexicanus_gene_ensembl"
     hom_species = ["human","mmusculus","ZebraFish"]
     hom_query = ["ensembl_gene","associated_gene_name","orthology_type","orthology_confidence","perc_id"]
@@ -133,18 +167,3 @@ The above example fetches gene data from Mexican tetra (*Astyanax mexicanus*), a
 The selected queries are their equivalent ENSEMBL Gene IDs, their name, what type of orthology, how confident the orthology score is, and what percentage is the target gene identical to the queried gene (in our case how similar is the human/mouse/zebrafish gene to its Mexican tetra equivalent).
 
 There will be a total of 15 (3 species x 5 queries) additional homology columns.
-
-## Finding out information about given dataset
-
-Once the desired dataset is found, elements of those dataset must be found. Every BioMart dataset has *attributes* which are columns of dataset corresponding to a feature of the database (e.g. attribute *Gene stable ID* represents ENSEMBL Gene ID in the Ensembl Genes 108 database) and *filters* which are used to filter the elements of the dataset (e.g. filtering for a particular chromosome via "Chromosome/scaffold" option). To inspect given dataset with respect to filters and attributes, use the functions `get_filters` and `get_attributes` respectively.
-These two functions specify a dataset via `dataset_name` or via `database_name` and `species` parameters, much like the function `fetch_data`. Additional parameter is `display` which if set to True will print out all rows of attributes or filters.
-
-Example:
-```
-    import PyMart_examp as pm
-    dataset_name = "amexicanus_gene_ensembl"
-    attributes = pm.get_attributes(dataset_name,display=True)
-    filters = pm.get_filters(dataset_name,display=True)
-```
-
-The above code will print out all atributes and filters related to genes of Mexican tetra and return them in the form of pandas dataframe. It can then be inspected and used to decide what will be fetched and filtered.

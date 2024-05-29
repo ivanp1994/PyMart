@@ -204,7 +204,10 @@ class DataBase(Base):
     """
     name: str = ""
     display_name: str = ""
-    _datasets: pd.DataFrame = pd.DataFrame(columns=["name", "display_name"])
+    _datasets: pd.DataFrame = field(init=False)
+
+    def __post_init__(self):
+        self._datasets = pd.DataFrame(columns=["name", "display_name"])
 
     def _get_datasets(self):
         """
@@ -338,7 +341,7 @@ class Filter:
     type: str
     operator: str
     sub_options: bool
-    options: pd.DataFrame = pd.DataFrame()
+    options: pd.DataFrame
 
     def explain_filter(self, print_options=True):
         """
@@ -377,7 +380,10 @@ class DataSet(Base):
     _config_xml: object = None
     _attributes: List[Attribute] = field(default_factory=list)
     _filters: List[Filter] = field(default_factory=list)
-    _homology: pd.DataFrame = pd.DataFrame()
+    _homology: pd.DataFrame = field(init=False)
+
+    def __post_init__(self):
+        _homology = pd.DataFrame()
 
     @property
     def config_xml(self):

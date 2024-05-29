@@ -341,10 +341,7 @@ class Filter:
     type: str
     operator: str
     sub_options: bool
-    options: pd.DataFrame = field(init=False)
-
-    def __post_init__(self):
-        self.options = pd.DataFrame()
+    options: pd.DataFrame
 
     def explain_filter(self, print_options=True):
         """

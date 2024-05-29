@@ -383,7 +383,7 @@ class DataSet(Base):
     _homology: pd.DataFrame = field(init=False)
 
     def __post_init__(self):
-        _homology = pd.DataFrame()
+        self._homology = pd.DataFrame()
 
     @property
     def config_xml(self):

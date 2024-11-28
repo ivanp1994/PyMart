@@ -13,7 +13,7 @@ with open("requirements.txt", "r") as _f:
 setup(name="PyMart",
       version="0.0.1",
       description="Python based API wrapper around Ensembl's BioMart",
-      package_dir={"pymart": "pymart"},
+      package_dir={"pymart": "PyMart"},
       long_description=long_description,
       long_description_content_type='text/markdown',
       url="https://github.com/ivanp1994/PyMart.git",

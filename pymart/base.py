@@ -162,6 +162,13 @@ import requests
 import pandas as pd
 
 
+class ServiceUnavailableError(Exception):
+    """Exception raised when the service is temporarily unavailable."""
+
+    def __init__(self, message):
+        super().__init__(message)
+
+
 @dataclass
 class Base:
     """
@@ -395,6 +402,14 @@ class DataSet(Base):
     def _get_config_xml(self):
         """Constructor for config_xml file"""
         r = self.get(type='configuration', dataset=self.name)
+        content_type = r.headers.get('Content-Type')
+        if 'text/html' in content_type:
+            html_content = r.content.decode('utf-8')
+            if "Service Unavailable" in html_content or "Error" in html_content:
+                raise ServiceUnavailableError(
+                    "The service is temporarily unavailable. Received HTML response: " + html_content)
+            raise ServiceUnavailableError(
+                "Unexpected HTML response received: " + html_content)
         if "Problem retrieving configuration" in r.text:
             raise KeyError("Problem retrieving configuration")
         return ElementTree.fromstring(r.content)
